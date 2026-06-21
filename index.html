@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora de Impressão 3D Pro</title>
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --primary-hover: #4338ca;
+            --background: #f8fafc;
+            --card: #ffffff;
+            --text-main: #0f172a;
+            --text-muted: #475569;
+            --border: #e2e8f0;
+            --success: #10b981;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--background);
+            color: var(--text-main);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+        }
+        .container {
+            width: 100%;
+            max-width: 600px;
+            background: var(--card);
+            padding: 30px;
+            border-radius: 16px;
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05), 0 4px 6px -4px rgba(0,0,0,0.05);
+            border: 1px solid var(--border);
+        }
+        h2 { text-align: center; margin-top: 0; color: var(--primary); font-size: 1.6rem; font-weight: 700; margin-bottom: 25px; }
+        .section-title { font-weight: 700; margin: 25px 0 12px 0; border-bottom: 2px solid var(--border); padding-bottom: 6px; color: var(--text-muted); font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.05em; }
+        .row { display: flex; gap: 12px; margin-bottom: 14px; flex-wrap: wrap; }
+        .field { flex: 1; display: flex; flex-direction: column; min-width: 120px; }
+        label { font-size: 0.85rem; margin-bottom: 6px; color: var(--text-muted); font-weight: 600; }
+        input { padding: 11px 14px; border: 1px solid var(--border); border-radius: 8px; font-size: 1rem; background: #fff; color: var(--text-main); transition: border 0.2s; }
+        input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1); }
+        
+        button.calc-btn { width: 100%; padding: 14px; background: var(--primary); color: white; border: none; border-radius: 8px; font-size: 1.1rem; font-weight: 700; cursor: pointer; margin-top: 20px; transition: background 0.2s; }
+        button.calc-btn:hover { background: var(--primary-hover); }
+        
+        .result-box { margin-top: 25px; padding: 20px; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 12px; display: none; }
+        .result-title { font-weight: 700; color: #166534; margin-bottom: 12px; font-size: 1.1rem; border-bottom: 1px dashed #bbf7d0; padding-bottom: 6px; }
+        .result-item { display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 0.95rem; color: #1e4620; }
+        .total-highlight { font-weight: 800; font-size: 1.3rem; border-top: 2px solid #bbf7d0; padding-top: 8px; margin-top: 8px; color: #14532d; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Calculadora de Impressão 3D Pro</h2>
+    
+    <!-- 1. CONFIGURAÇÕES DOS MATERIAIS -->
+    <div class="section-title">1. Precificação de Filamentos</div>
+    <div class="row">
+        <div class="field">
+            <label>Preço do KG - Material 1 (R$)</label>
+            <input type="number" id="precoMat1" value="84">
+        </div>
+        <div class="field">
+            <label>Preço do KG - Material 2 (R$)</label>
+            <input type="number" id="precoMat2" value="60">
+        </div>
+    </div>
+
+    <!-- 2. DADOS DO FATIAMENTO (SLICER) -->
+    <div class="section-title">2. Dados Atuais do Projeto</div>
+    <div class="row">
+        <div class="field" style="flex: 1.5;">
+            <label>Peso Material 1 usado (g)</label>
+            <input type="number" id="g1" value="0">
+        </div>
+        <div class="field">
+            <label>Tempo Material 1 (h)</label>
+            <input type="number" id="h1" value="0" step="0.01" placeholder="Ex: 1.5">
+        </div>
+    </div>
+    <div class="row">
+        <div class="field" style="flex: 1.5;">
+            <label>Peso Material 2 usado (g)</label>
+            <input type="number" id="g2" value="0">
+        </div>
+        <div class="field">
+            <label>Tempo Material 2 (h)</label>
+            <input type="number" id="h2" value="0" step="0.01" placeholder="Ex: 4.5">
+        </div>
+    </div>
+
+    <!-- 3. COMPONENTES E TAXAS ADICIONAIS -->
+    <div class="section-title">3. Custos Fixos e Variáveis</div>
+    <div class="row">
+        <div class="field">
+            <label>Componentes Extras (LED, parafusos)</label>
+            <input type="number" id="componentes" value="0" step="0.01">
+        </div>
+        <div class="field">
+            <label>Embalagem e Envio (R$)</label>
+            <input type="number" id="embalagem" value="0" step="0.01">
+        </div>
+    </div>
+    <div class="row">
+        <div class="field">
+            <label>Mão de Obra / Preparação (R$)</label>
+            <input type="number" id="maoDeObra" value="0" step="0.01" placeholder="Faturamento/Tempo">
+        </div>
+        <div class="field">
+            <label>Margem de Lucro Desejada (%)</label>
+            <input type="number" id="margemLucro" value="100">
+        </div>
+    </div>
+
+    <!-- 4. TAXAS DE INFRAESTRUTURA -->
+    <div class="section-title">4. Taxas de Infraestrutura</div>
+    <div class="row">
+        <div class="field">
+            <label>Custo de Energia kWh (R$)</label>
+            <input type="number" id="kwh" value="1.10" step="0.01">
+        </div>
+        <div class="field">
+            <label>Depreciação Máquina/h (R$)</label>
+            <input type="number" id="dep" value="0.70" step="0.01">
+        </div>
+        <div class="field">
+            <label>Risco de Erro / Falha (%)</label>
+            <input type="number" id="risco" value="10">
+        </div>
+    </div>
+
+    <button class="calc-btn" onclick="executarCalculoProfissional()">Calcular Orçamento Técnico</button>
+
+    <!-- EXIBIÇÃO DO RELATÓRIO TÉCNICO -->
+    <div class="result-box" id="resultadoBox">
+        <div class="result-title">Detalhamento Financeiro do Projeto:</div>
+        <div class="result-item"><span>Custo de Matéria-Prima (Filamentos):</span> <span id="resFilamento">R$ 0,00</span></div>
+        <div class="result-item"><span>Custo Operacional (Energia):</span> <span id="resEnergia">R$ 0,00</span></div>
+        <div class="result-item"><span>Fundo de Manutenção (Depreciação):</span> <span id="resDep">R$ 0,00</span></div>
+        <div class="result-item"><span>Taxa de Risco Integrada:</span> <span id="resRisco">R$ 0,00</span></div>
+        <div class="result-item"><span>Mão de Obra e Adicionais:</span> <span id="resInsumos">R$ 0,00</span></div>
+        <div class="result-item" style="font-weight: 600; color: #15803d; border-top: 1px dashed #bbf7d0; padding-top: 4px;"><span>Custo Total de Fabricação:</span> <span id="resCustoFab">R$ 0,00</span></div>
+        <div class="result-item"><span>Margem de Lucro Adicionada:</span> <span id="resLucro">R$ 0,00</span></div>
+        <div class="result-item total-highlight"><span>Preço Final de Venda:</span> <span id="resPrecoVenda">R$ 0,00</span></div>
+    </div>
+</div>
+
+<script>
+function executarCalculoProfissional() {
+    // Captura estática de dados para evitar travamento de memória interna
+    const precoMat1 = parseFloat(document.getElementById('precoMat1').value) || 0;
+    const precoMat2 = parseFloat(document.getElementById('precoMat2').value) || 0;
+    
+    const g1 = parseFloat(document.getElementById('g1').value) || 0;
+    const h1 = parseFloat(document.getElementById('h1').value) || 0;
+    
+    const g2 = parseFloat(document.getElementById('g2').value) || 0;
+    const h2 = parseFloat(document.getElementById('h2').value) || 0;
+    
+    const componentes = parseFloat(document.getElementById('componentes').value) || 0;
+    const embalagem = parseFloat(document.getElementById('embalagem').value) || 0;
+    const maoDeObra = parseFloat(document.getElementById('maoDeObra').value) || 0;
+    const margemLucro = parseFloat(document.getElementById('margemLucro').value) || 0;
+    
+    const kwh = parseFloat(document.getElementById('kwh').value) || 0;
+    const dep = parseFloat(document.getElementById('dep').value) || 0;
+    const riscoPorcentagem = parseFloat(document.getElementById('risco').value) || 0;
+    
+    const consumoA1Mini = 0.06; // Consumo padrão estabelecido da sua máquina
+
+    // Cálculos de Produção Física
+    const custoFilamento = ((g1 / 1000) * precoMat1) + ((g2 / 1000) * precoMat2);
+    const horasTotais = h1 + h2;
+    const custoEnergia = horasTotais * consumoA1Mini * kwh;
+    const custoDepreciacao = horasTotais * dep;
+    
+    // Risco incide diretamente sobre o desgaste e perda de material da máquina
+    const subtotalManufatura = custoFilamento + custoEnergia + custoDepreciacao;
+    const valorRisco = subtotalManufatura * (riscoPorcentagem / 100);
+    
+    // Agrupamento de Insumos Manuais e Externos (Não sofrem taxa de risco de impressão)
+    const totalAdicionais = componentes + embalagem + maoDeObra;
+    
+    // Custo Técnico de Produção Final
+    const custoFabricacaoTotal = subtotalManufatura + valorRisco + totalAdicionais;
+    
+    // Precificação com Margem Comercial
+    const valorLucro = custoFabricacaoTotal * (margemLucro / 100);
+    const precoVendaFinal = custoFabricacaoTotal + valorLucro;
+
+    // Injeção de Strings Limpa e Segura
+    document.getElementById('resFilamento').innerText = "R$ " + custoFilamento.toFixed(2).replace('.', ',');
+    document.getElementById('resEnergia').innerText = "R$ " + custoEnergia.toFixed(2).replace('.', ',');
+    document.getElementById('resDep').innerText = "R$ " + custoDepreciacao.toFixed(2).replace('.', ',');
+    document.getElementById('resRisco').innerText = "R$ " + valorRisco.toFixed(2).replace('.', ',');
+    document.getElementById('resInsumos').innerText = "R$ " + totalAdicionais.toFixed(2).replace('.', ',');
+}
