@@ -1291,6 +1291,81 @@ _Calculadora de Impressão 3D Premium_`;
                 </p>
               </div>
 
+              {/* Embalagem, Plataformas e Outros Custos */}
+              <div id="cost-packaging-others" className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-150 dark:border-slate-850 p-5 shadow-sm space-y-4">
+                <div className="flex items-center gap-2 border-b border-slate-100 dark:border-slate-800 pb-3">
+                  <span className="p-1.5 bg-brand-teal/10 text-brand-teal dark:bg-brand-teal/20 dark:text-brand-teal rounded-lg">
+                    <Package size={15} />
+                  </span>
+                  <h3 className="font-bold text-slate-800 dark:text-white text-sm">
+                    4. Embalagem, Encomenda & Impostos / Taxas
+                  </h3>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  {/* Custo de Embalagem */}
+                  <div className="space-y-1.5">
+                    <div className="flex justify-between items-center">
+                      <label className="text-xs font-bold text-slate-600 dark:text-slate-300">
+                        Custo da Embalagem
+                      </label>
+                      <span className="text-[10px] font-mono font-medium text-slate-400">R$</span>
+                    </div>
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.1"
+                      value={custoEmbalagem || ""}
+                      onChange={(e) => setCustoEmbalagem(Math.max(0, Number(e.target.value)))}
+                      className="w-full font-mono text-xs p-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl focus:outline-brand-teal text-slate-900 dark:text-white"
+                      placeholder="Ex: 5.00"
+                    />
+                    <span className="text-[10px] text-slate-400 block leading-tight">Caixas, plástico bolha, fitas</span>
+                  </div>
+
+                  {/* Outros Custos */}
+                  <div className="space-y-1.5">
+                    <div className="flex justify-between items-center">
+                      <label className="text-xs font-bold text-slate-600 dark:text-slate-300">
+                        Outros Custos / Insumos
+                      </label>
+                      <span className="text-[10px] font-mono font-medium text-slate-400">R$</span>
+                    </div>
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.1"
+                      value={custoOutros || ""}
+                      onChange={(e) => setCustoOutros(Math.max(0, Number(e.target.value)))}
+                      className="w-full font-mono text-xs p-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl focus:outline-brand-teal text-slate-900 dark:text-white"
+                      placeholder="Ex: 2.50"
+                    />
+                    <span className="text-[10px] text-slate-400 block leading-tight">Cola, spray, parafusos, lixas</span>
+                  </div>
+
+                  {/* Impostos / Comissão de Plataforma */}
+                  <div className="space-y-1.5">
+                    <div className="flex justify-between items-center bg-transparent">
+                      <label className="text-xs font-bold text-slate-600 dark:text-slate-300">
+                        Taxas / Tarifa de Venda
+                      </label>
+                      <span className="text-[10px] font-mono font-bold text-brand-teal">{taxaImpostosTaxas}%</span>
+                    </div>
+                    <input
+                      type="number"
+                      min="0"
+                      max="90"
+                      step="1"
+                      value={taxaImpostosTaxas || ""}
+                      onChange={(e) => setTaxaImpostosTaxas(Math.min(90, Math.max(0, Number(e.target.value))))}
+                      className="w-full font-mono text-xs p-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl focus:outline-brand-teal text-slate-900 dark:text-white"
+                      placeholder="Ex: 12"
+                    />
+                    <span className="text-[10px] text-slate-400 block leading-tight">Comissão MercadoLivre/Shopee, imposto</span>
+                  </div>
+                </div>
+              </div>
+
               {/* Risco de Falha & Margem de Lucro */}
               <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-150 dark:border-slate-850 p-5 shadow-sm space-y-4">
                 <div className="flex items-center space-x-2 border-b border-slate-100 dark:border-slate-800 pb-3">
@@ -1298,7 +1373,7 @@ _Calculadora de Impressão 3D Premium_`;
                     <TrendingUp size={15} />
                   </span>
                   <h3 className="font-bold text-slate-800 dark:text-white text-sm">
-                    4. Seguros de Perda & Margem de Venda
+                    5. Seguros de Perda & Margem de Venda
                   </h3>
                 </div>
 
@@ -1430,81 +1505,6 @@ _Calculadora de Impressão 3D Premium_`;
                     )}
                   </div>
 
-                </div>
-              </div>
-
-              {/* Embalagem, Plataformas e Outros Custos */}
-              <div id="cost-packaging-others" className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-150 dark:border-slate-850 p-5 shadow-sm space-y-4">
-                <div className="flex items-center gap-2 border-b border-slate-100 dark:border-slate-800 pb-3">
-                  <span className="p-1.5 bg-brand-teal/10 text-brand-teal dark:bg-brand-teal/20 dark:text-brand-teal rounded-lg">
-                    <Package size={15} />
-                  </span>
-                  <h3 className="font-bold text-slate-800 dark:text-white text-sm">
-                    5. Embalagem, Encomenda & Impostos / Taxas
-                  </h3>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  {/* Custo de Embalagem */}
-                  <div className="space-y-1.5">
-                    <div className="flex justify-between items-center">
-                      <label className="text-xs font-bold text-slate-600 dark:text-slate-300">
-                        Custo da Embalagem
-                      </label>
-                      <span className="text-[10px] font-mono font-medium text-slate-400">R$</span>
-                    </div>
-                    <input
-                      type="number"
-                      min="0"
-                      step="0.1"
-                      value={custoEmbalagem || ""}
-                      onChange={(e) => setCustoEmbalagem(Math.max(0, Number(e.target.value)))}
-                      className="w-full font-mono text-xs p-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl focus:outline-brand-teal text-slate-900 dark:text-white"
-                      placeholder="Ex: 5.00"
-                    />
-                    <span className="text-[10px] text-slate-400 block leading-tight">Caixas, plástico bolha, fitas</span>
-                  </div>
-
-                  {/* Outros Custos */}
-                  <div className="space-y-1.5">
-                    <div className="flex justify-between items-center">
-                      <label className="text-xs font-bold text-slate-600 dark:text-slate-300">
-                        Outros Custos / Insumos
-                      </label>
-                      <span className="text-[10px] font-mono font-medium text-slate-400">R$</span>
-                    </div>
-                    <input
-                      type="number"
-                      min="0"
-                      step="0.1"
-                      value={custoOutros || ""}
-                      onChange={(e) => setCustoOutros(Math.max(0, Number(e.target.value)))}
-                      className="w-full font-mono text-xs p-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl focus:outline-brand-teal text-slate-900 dark:text-white"
-                      placeholder="Ex: 2.50"
-                    />
-                    <span className="text-[10px] text-slate-400 block leading-tight">Cola, spray, parafusos, lixas</span>
-                  </div>
-
-                  {/* Impostos / Comissão de Plataforma */}
-                  <div className="space-y-1.5">
-                    <div className="flex justify-between items-center bg-transparent">
-                      <label className="text-xs font-bold text-slate-600 dark:text-slate-300">
-                        Taxas / Tarifa de Venda
-                      </label>
-                      <span className="text-[10px] font-mono font-bold text-brand-teal">{taxaImpostosTaxas}%</span>
-                    </div>
-                    <input
-                      type="number"
-                      min="0"
-                      max="90"
-                      step="1"
-                      value={taxaImpostosTaxas || ""}
-                      onChange={(e) => setTaxaImpostosTaxas(Math.min(90, Math.max(0, Number(e.target.value))))}
-                      className="w-full font-mono text-xs p-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl focus:outline-brand-teal text-slate-900 dark:text-white"
-                      placeholder="Ex: 12"
-                    />
-                    <span className="text-[10px] text-slate-400 block leading-tight">Comissão MercadoLivre/Shopee, imposto</span>
-                  </div>
                 </div>
               </div>
 

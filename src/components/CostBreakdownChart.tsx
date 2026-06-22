@@ -24,7 +24,7 @@ export function CostBreakdownChart({
   const total = custoFilamento + custoEnergia + custoDepreciacao + custoMaoDeObra + custoPerda + custoEmbalagem + custoOutros;
 
   const rawSegments = [
-    { label: "Filamento", value: custoFilamento, color: "#0D9488", bgClass: "bg-brand-teal", borderClass: "border-brand-teal" }, 
+    { label: "Filamento", value: custoFilamento, color: "#1d6f8a", bgClass: "bg-brand-teal", borderClass: "border-brand-teal" }, 
     { label: "Energia Elétrica", value: custoEnergia, color: "#3B82F6", bgClass: "bg-blue-500", borderClass: "border-blue-500" }, 
     { label: "Depreciação Máquina", value: custoDepreciacao, color: "#F59E0B", bgClass: "bg-amber-500", borderClass: "border-amber-500" }, 
     { label: "Mão de Obra", value: custoMaoDeObra, color: "#8B5CF6", bgClass: "bg-violet-500", borderClass: "border-violet-500" }, 
@@ -43,7 +43,7 @@ export function CostBreakdownChart({
   const circumference = 2 * Math.PI * radius; // ~314.16
   const strokeWidth = 14;
 
-  let currentOffset = 0;
+  let runningOffset = 0;
 
   return (
     <div id="chart-section" className="bg-slate-50 dark:bg-slate-900/60 p-4 sm:p-6 rounded-2xl border border-slate-100 dark:border-slate-800">
@@ -80,11 +80,11 @@ export function CostBreakdownChart({
                 if (seg.percentage === 0) return null;
 
                 const strokeDash = (seg.percentage / 100) * circumference;
-                const strokeOffset = circumference - strokeDash + currentOffset;
+                const strokeOffset = -runningOffset;
                 const isHovered = activeSegmentIndex === idx;
 
                 // Accrue offset for the next slice
-                currentOffset -= strokeDash;
+                runningOffset += strokeDash;
 
                 return (
                   <circle
@@ -95,7 +95,7 @@ export function CostBreakdownChart({
                     fill="transparent"
                     stroke={seg.color}
                     strokeWidth={isHovered ? strokeWidth + 3 : strokeWidth}
-                    strokeDasharray={circumference}
+                    strokeDasharray={`${strokeDash} ${circumference}`}
                     strokeDashoffset={strokeOffset}
                     strokeLinecap="round"
                     className="transition-all duration-300 cursor-pointer origin-center"
@@ -159,7 +159,10 @@ export function CostBreakdownChart({
                   onMouseLeave={() => setActiveSegmentIndex(null)}
                 >
                   <div className="flex items-center space-x-2.5">
-                    <span className={`w-3 h-3 rounded-full ${seg.bgClass}`} />
+                    <span 
+                      className="w-3 h-3 rounded-full flex-shrink-0" 
+                      style={{ backgroundColor: seg.color }}
+                    />
                     <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
                       {seg.label}
                     </span>
