@@ -39,7 +39,7 @@ export function SavedQuotes({
         </p>
       </div>
 
-      <div className="space-y-3.5 max-h-72 overflow-y-auto pr-1">
+      <div className="space-y-3.5 max-h-[70vh] overflow-y-auto pr-1">
         {orcamentos.map((orc) => {
           const totalTempoMinutos =
             orc.tempoImpressaoMinutos +

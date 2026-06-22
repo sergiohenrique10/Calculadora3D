@@ -107,9 +107,9 @@ const ORCAMENTOS_PADRAO: Orcamento[] = [
     tempoSetupMinutos: 20,
     tempoPosProcessamentoMinutos: 15,
     impressoraId: "imp-bambu",
-    custoKwh: 1.10,
+    custoKwh: 0.85,
     custoMaoDeObraHora: 25.0,
-    taxaFalha: 10,
+    taxaFalha: 5,
     lucroDesejado: 70,
     calculado: {
       custoFilamento: 19.5,
@@ -131,7 +131,7 @@ export default function App() {
   const [orcamentos, setOrcamentos] = useState<Orcamento[]>([]);
 
   // --- Active Calculator Inputs ---
-  const [activeTab, setActiveTab] = useState<"calculadora" | "inventario">("calculadora");
+  const [activeTab, setActiveTab] = useState<"calculadora" | "orcamentos" | "inventario">("calculadora");
   const [orcamentoTitulo, setOrcamentoTitulo] = useState("Minha Nova Impressão 3D");
   const [selectedFilamentoId, setSelectedFilamentoId] = useState("");
   const [selectedFilamentoIdSecundario, setSelectedFilamentoIdSecundario] = useState("");
@@ -159,8 +159,10 @@ export default function App() {
   const [custoKwh, setCustoKwh] = useState<number>(0); // R$ por kWh
   const [custoMaoDeObraHora, setCustoMaoDeObraHora] = useState<number>(0); // R$ por hora ativa de trabalho
   
-  const [taxaFalha, setTaxaFalha] = useState<number>(0); // % de risco
-  const [lucroDesejado, setLucroDesejado] = useState<number>(0); // % de markup
+  const [taxaFalha, setTaxaFalha] = useState<number>(10); // % de risco (Iniciando com 10% padrão conforme solicitado)
+  const [margemModo, setMargemModo] = useState<"porcentagem" | "valor">("porcentagem");
+  const [precoVendaAlvo, setPrecoVendaAlvo] = useState<number>(73);
+  const [lucroDesejado, setLucroDesejado] = useState<number>(80); // % de markup
   
   const [custoEmbalagem, setCustoEmbalagem] = useState<number>(0); // R$ embalagem
   const [custoOutros, setCustoOutros] = useState<number>(0); // Outros custos em R$
@@ -327,17 +329,40 @@ export default function App() {
   // 6. Custos totais de produção combinados (Produção + Mão de Obra + Embalagem + Outros Insumos)
   const custoProducaoTotal = subtotalProcesso + custoPerda + custoMaoDeObra + custoEmbalagemNum + custoOutrosNum;
 
-  // 7. Base do preço antes das taxas de comissão/impostos da plataforma (Markup aplicado)
-  const precoBaseSemTaxas = custoProducaoTotal * (1 + (Number(lucroDesejado) || 0) / 100);
+  // 7 & 8. Determinar preço de venda sugerido e markup (lucro desejado) correspondente
+  let precoVendaSugerido = 0;
+  let activeLucroDesejado = Number(lucroDesejado) || 0;
 
-  // 8. Preço de venda sugerido considerando as taxas de plataforma/comissões/impostos (Cálculo reverso)
   const taxaDivisor = 1 - (taxaImpostosTaxasNum / 100);
-  const precoVendaSugerido = taxaDivisor > 0.05 ? (precoBaseSemTaxas / taxaDivisor) : (precoBaseSemTaxas / 0.05);
+
+  if (margemModo === "porcentagem") {
+    // Modo percentual (o usuário define o % de markup, calcula o preço de venda)
+    const precoBaseSemTaxas = custoProducaoTotal * (1 + (Number(lucroDesejado) || 0) / 100);
+    precoVendaSugerido = taxaDivisor > 0.05 ? (precoBaseSemTaxas / taxaDivisor) : (precoBaseSemTaxas / 0.05);
+  } else {
+    // Modo por valor final (o usuário define o preço final em R$, calcula o markup equivalente)
+    precoVendaSugerido = Number(precoVendaAlvo) || 0;
+    
+    // De acordo com a álgebra reversa:
+    // precoVendaSugerido = (custoProducaoTotal * (1 + lucroDesejado / 100)) / taxaDivisor
+    // (precoVendaSugerido * taxaDivisor) / custoProducaoTotal = 1 + lucroDesejado / 100
+    // lucroDesejado / 100 = ((precoVendaSugerido * taxaDivisor) / custoProducaoTotal) - 1
+    const divisorCoef = taxaDivisor > 0.05 ? taxaDivisor : 0.05;
+    const precoBase = precoVendaSugerido * divisorCoef;
+    activeLucroDesejado = custoProducaoTotal > 0 ? parseFloat((((precoBase / custoProducaoTotal) - 1) * 100).toFixed(1)) : 0;
+  }
 
   const custoImpostosTaxas = precoVendaSugerido * (taxaImpostosTaxasNum / 100);
 
   // 9. Lucro líquido real (Preço final - Gastos totais - Taxas deduzidas)
   const lucroLiquido = precoVendaSugerido - custoProducaoTotal - custoImpostosTaxas;
+
+  // Efeito secundário para manter precoVendaAlvo atualizado enquanto estiver em modo percentual
+  useEffect(() => {
+    if (margemModo === "porcentagem" && precoVendaSugerido > 0) {
+      setPrecoVendaAlvo(parseFloat(precoVendaSugerido.toFixed(2)));
+    }
+  }, [margemModo, precoVendaSugerido]);
 
   // --- Handlers for parsed slicer G-Code data ---
   const handleGCodeDataParsed = (data: { pesoGramas: number; tempoMinutos: number; slicerName: string }) => {
@@ -370,8 +395,9 @@ export default function App() {
     setTempoPosProcessamentoMinutos(0);
     setCustoKwh(0);
     setCustoMaoDeObraHora(0);
-    setTaxaFalha(0);
-    setLucroDesejado(0);
+    setTaxaFalha(10); // Iniciando com 10% padrão conforme solicitado
+    setMargemModo("porcentagem");
+    setLucroDesejado(80);
     setCustoEmbalagem(0);
     setCustoOutros(0);
     setTaxaImpostosTaxas(0);
@@ -407,7 +433,7 @@ export default function App() {
       custoKwh: Number(custoKwh) || 0,
       custoMaoDeObraHora: Number(custoMaoDeObraHora) || 0,
       taxaFalha: Number(taxaFalha) || 0,
-      lucroDesejado: Number(lucroDesejado) || 0,
+      lucroDesejado: Math.round(activeLucroDesejado),
       multiMaterialActive,
       filamentoIdSecundario: selectedFilamentoIdSecundario,
       pesoSecundario: Number(pesoSecundario) || 0,
@@ -437,6 +463,8 @@ export default function App() {
 
   // --- Load saved quote back to calculator state ---
   const handleLoadOrcamento = (orc: Orcamento) => {
+    setActiveTab("calculadora");
+    setMargemModo("porcentagem");
     setOrcamentoTitulo(orc.titulo);
     setSelectedFilamentoId(orc.filamentoId);
     setPesoPeca(orc.pesoPeca);
@@ -602,7 +630,7 @@ _Calculadora de Impressão 3D Premium_`;
       custoKwh,
       custoMaoDeObraHora,
       taxaFalha,
-      lucroDesejado,
+      lucroDesejado: Math.round(activeLucroDesejado),
       multiMaterialActive,
       filamentoIdSecundario: selectedFilamentoIdSecundario,
       pesoSecundario: Number(pesoSecundario) || 0,
@@ -703,7 +731,7 @@ _Calculadora de Impressão 3D Premium_`;
             <div className="bg-slate-100 dark:bg-slate-800 p-1 rounded-xl flex items-center">
               <button
                 onClick={() => setActiveTab("calculadora")}
-                className={`flex items-center space-x-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-colors cursor-pointer ${
+                className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors cursor-pointer ${
                   activeTab === "calculadora"
                     ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-sm"
                     : "text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200"
@@ -713,8 +741,19 @@ _Calculadora de Impressão 3D Premium_`;
                 <span>Calculadora</span>
               </button>
               <button
+                onClick={() => setActiveTab("orcamentos")}
+                className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors cursor-pointer ${
+                  activeTab === "orcamentos"
+                    ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-sm"
+                    : "text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200"
+                }`}
+              >
+                <Receipt size={13} />
+                <span>Orçamentos Salvos</span>
+              </button>
+              <button
                 onClick={() => setActiveTab("inventario")}
-                className={`flex items-center space-x-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-colors cursor-pointer ${
+                className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors cursor-pointer ${
                   activeTab === "inventario"
                     ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-sm"
                     : "text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200"
@@ -1292,29 +1331,103 @@ _Calculadora de Impressão 3D Premium_`;
                   </div>
 
                   {/* Margem de Lucro */}
-                  <div className="space-y-1.5">
-                    <div className="flex justify-between items-center text-xs">
-                      <label className="font-bold text-slate-600 dark:text-slate-300">
-                        Margem de Lucro desejada
+                  <div className="space-y-4 sm:border-l sm:pl-4 border-slate-100 dark:border-slate-800">
+                    <div>
+                      <label className="text-xs font-bold text-slate-600 dark:text-slate-300 block mb-1.5">
+                        Definição do Lucro / Margem
                       </label>
-                      <span className="font-bold text-brand-teal dark:text-brand-teal font-mono">
-                        {lucroDesejado}%
-                      </span>
+                      <div className="grid grid-cols-2 gap-1 p-1 bg-slate-100 dark:bg-slate-950 rounded-xl">
+                        <button
+                          type="button"
+                          onClick={() => setMargemModo("porcentagem")}
+                          className={`py-1.5 px-3 rounded-lg text-xs font-bold text-center cursor-pointer transition-colors ${
+                            margemModo === "porcentagem"
+                              ? "bg-white dark:bg-slate-850 text-brand-teal shadow-xs dark:text-cyan-400"
+                              : "text-slate-500 hover:text-slate-700 dark:text-slate-400"
+                          }`}
+                        >
+                          % Porcentagem
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setMargemModo("valor")}
+                          className={`py-1.5 px-3 rounded-lg text-xs font-bold text-center cursor-pointer transition-colors ${
+                            margemModo === "valor"
+                              ? "bg-white dark:bg-slate-850 text-brand-teal shadow-xs dark:text-cyan-400"
+                              : "text-slate-500 hover:text-slate-700 dark:text-slate-400"
+                          }`}
+                        >
+                          R$ Valor de Venda
+                        </button>
+                      </div>
                     </div>
-                    <input
-                      type="range"
-                      min="0"
-                      max="300"
-                      step="5"
-                      value={lucroDesejado}
-                      onChange={(e) => setLucroDesejado(Number(e.target.value))}
-                      className="w-full accent-brand-teal cursor-pointer"
-                    />
-                    <div className="flex justify-between text-[10px] text-slate-400">
-                      <span>Sem Lucro (0%)</span>
-                      <span>Padrão (80%)</span>
-                      <span>Raridade (300%)</span>
-                    </div>
+
+                    {margemModo === "porcentagem" ? (
+                      <div className="space-y-1.5">
+                        <div className="flex justify-between items-center text-xs">
+                          <label className="font-bold text-slate-600 dark:text-slate-300">
+                            Margem de Lucro desejada
+                          </label>
+                          <div className="flex items-center gap-1.5">
+                            <input
+                              type="number"
+                              min="0"
+                              max="1000"
+                              value={lucroDesejado}
+                              onChange={(e) => setLucroDesejado(Math.max(0, Number(e.target.value)))}
+                              className="w-16 font-mono text-center text-xs font-bold text-brand-teal dark:text-cyan-400 py-0.5 px-1 bg-slate-50 dark:bg-slate-800 rounded border border-slate-200 dark:border-slate-700 focus:outline-brand-teal"
+                            />
+                            <span className="font-bold text-brand-teal dark:text-cyan-400 font-mono">%</span>
+                          </div>
+                        </div>
+                        <input
+                          type="range"
+                          min="0"
+                          max="300"
+                          step="5"
+                          value={lucroDesejado}
+                          onChange={(e) => setLucroDesejado(Number(e.target.value))}
+                          className="w-full accent-brand-teal cursor-pointer"
+                        />
+                        <div className="flex justify-between text-[10px] text-slate-400">
+                          <span>Sem Lucro (0%)</span>
+                          <span>Padrão (80%)</span>
+                          <span>Raridade (300%)</span>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="space-y-1.5">
+                        <div className="flex justify-between items-center text-xs">
+                          <label className="font-bold text-slate-600 dark:text-slate-300">
+                            Preço de Venda Final Desejado
+                          </label>
+                          <span className="font-bold text-brand-teal dark:text-cyan-400 font-mono">
+                            {activeLucroDesejado > 0 ? `+${activeLucroDesejado.toFixed(1)}%` : `${activeLucroDesejado.toFixed(1)}%`}
+                          </span>
+                        </div>
+                        <div className="relative rounded-xl shadow-xs">
+                          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <span className="text-slate-500 text-xs font-bold">R$</span>
+                          </div>
+                          <input
+                            type="number"
+                            min="0.1"
+                            step="0.1"
+                            value={precoVendaAlvo}
+                            onChange={(e) => setPrecoVendaAlvo(Math.max(0, Number(e.target.value)))}
+                            className="w-full font-mono text-xs pl-8 pr-3 py-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white focus:outline-brand-teal font-extrabold"
+                            placeholder="Ex: 73.00"
+                          />
+                        </div>
+                        <div className="text-[10px] text-slate-400 leading-normal bg-slate-50 dark:bg-slate-950 p-2 rounded-lg border border-slate-100 dark:border-slate-900">
+                          Preço: <span className="font-mono text-slate-700 dark:text-slate-300 font-bold">R$ {Number(precoVendaAlvo).toFixed(2)}</span>
+                          <br />
+                          Custo de Produção: <span className="font-mono text-slate-700 dark:text-slate-300 font-bold">R$ {custoProducaoTotal.toFixed(2)}</span>
+                          <br />
+                          Margem: <span className="font-mono text-brand-teal dark:text-cyan-400 font-bold">{activeLucroDesejado.toFixed(1)}% (markup)</span>
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                 </div>
@@ -1430,7 +1543,7 @@ _Calculadora de Impressão 3D Premium_`;
                     <span className="text-base font-extrabold text-brand-teal font-mono">
                       R$ {lucroLiquido.toFixed(2)}
                     </span>
-                    <span className="text-[9px] text-slate-500 block mt-0.5">({lucroDesejado}% markup)</span>
+                    <span className="text-[9px] text-slate-500 block mt-0.5">({activeLucroDesejado.toFixed(1)}% markup)</span>
                   </div>
 
                   <div className="bg-white/5 rounded-2xl p-3 border border-white/5 transition-all hover:bg-white/10">
@@ -1515,16 +1628,26 @@ _Calculadora de Impressão 3D Premium_`;
                 custoOutros={custoOutrosNum}
               />
 
-              {/* Saved quotes listing (local budget history DB) */}
-              <SavedQuotes
-                orcamentos={orcamentos}
-                onSelectOrcamento={handleLoadOrcamento}
-                onDeleteOrcamento={handleDeleteOrcamento}
-                onCopyTextSummary={handleCopyTextSummary}
-              />
-
             </div>
 
+          </div>
+        ) : activeTab === "orcamentos" ? (
+          <div className="max-w-4xl mx-auto space-y-6">
+            <div className="text-center space-y-2 mb-4">
+              <h2 className="text-xl font-bold tracking-tight text-slate-800 dark:text-white">
+                Seus Orçamentos Guardados
+              </h2>
+              <p className="text-xs text-slate-400 dark:text-slate-500 max-w-sm mx-auto">
+                Carregue rapidamente os dados salvos de volta para a calculadora ou copie as especificações formatadas para enviar ao cliente.
+              </p>
+            </div>
+            
+            <SavedQuotes
+              orcamentos={orcamentos}
+              onSelectOrcamento={handleLoadOrcamento}
+              onDeleteOrcamento={handleDeleteOrcamento}
+              onCopyTextSummary={handleCopyTextSummary}
+            />
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
