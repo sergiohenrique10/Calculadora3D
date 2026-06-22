@@ -107,9 +107,9 @@ const ORCAMENTOS_PADRAO: Orcamento[] = [
     tempoSetupMinutos: 20,
     tempoPosProcessamentoMinutos: 15,
     impressoraId: "imp-bambu",
-    custoKwh: 0.85,
+    custoKwh: 1.10,
     custoMaoDeObraHora: 25.0,
-    taxaFalha: 5,
+    taxaFalha: 10,
     lucroDesejado: 70,
     calculado: {
       custoFilamento: 19.5,
