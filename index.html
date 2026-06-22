@@ -1,105 +1,13 @@
-<script>
-function getInputs() {
-    return {
-        materiais: {
-            mat1: {
-                precoKg: parseFloat(precoMat1.value) || 0,
-                peso: parseFloat(g1.value) || 0
-            },
-            mat2: {
-                precoKg: parseFloat(precoMat2.value) || 0,
-                peso: parseFloat(g2.value) || 0
-            }
-        },
-        tempo: {
-            horas: (parseFloat(h1.value) || 0) + ((parseFloat(min1.value) || 0) / 60)
-        },
-        custos: {
-            componentes: parseFloat(componentes.value) || 0,
-            embalagem: parseFloat(embalagem.value) || 0,
-            maoDeObra: parseFloat(maoDeObra.value) || 0
-        },
-        infra: {
-            kwh: parseFloat(kwh.value) || 0,
-            potencia: parseFloat(potenciaWatts.value) || 0,
-            depreciacaoHora: parseFloat(dep.value) || 0,
-            taxaFalha: parseFloat(taxaFalha.value) || 0
-        },
-        lucro: parseFloat(lucroPorcentagem.value) || 0
-    };
-}
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Calculadora de Impressão 3D</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
 
-function calcularCustos(data) {
-    const custoFilamento =
-        (data.materiais.mat1.peso / 1000) * data.materiais.mat1.precoKg +
-        (data.materiais.mat2.peso / 1000) * data.materiais.mat2.precoKg;
-
-    const custoEnergia =
-        (data.infra.potencia / 1000) * data.infra.kwh * data.tempo.horas;
-
-    const custoDepreciacao =
-        data.tempo.horas * data.infra.depreciacaoHora;
-
-    const insumos =
-        data.custos.componentes +
-        data.custos.embalagem +
-        data.custos.maoDeObra;
-
-    const subtotal =
-        custoFilamento + custoEnergia + custoDepreciacao + insumos;
-
-    const falhas =
-        subtotal * (data.infra.taxaFalha / 100);
-
-    const custoTotal =
-        subtotal + falhas;
-
-    const lucroValor =
-        custoTotal * (data.lucro / 100);
-
-    const precoFinal =
-        custoTotal + lucroValor;
-
-    return {
-        custoFilamento,
-        custoEnergia,
-        custoDepreciacao,
-        insumos,
-        subtotal,
-        falhas,
-        custoTotal,
-        lucroValor,
-        precoFinal,
-
-        // 🔥 diferenciais profissionais
-        custoHora: custoTotal / data.tempo.horas,
-        custoGrama: custoFilamento / (data.materiais.mat1.peso + data.materiais.mat2.peso || 1),
-        margemReal: (lucroValor / precoFinal) * 100
-    };
-}
-
-function formatar(valor) {
-    return "R$ " + valor.toFixed(2).replace(".", ",");
-}
-
-function calcularOrcamentoCompleto() {
-    const data = getInputs();
-    const r = calcularCustos(data);
-
-    resFilamento.innerText = formatar(r.custoFilamento);
-    resEnergia.innerText = formatar(r.custoEnergia);
-    resDep.innerText = formatar(r.custoDepreciacao);
-    resInsumos.innerText = formatar(r.insumos);
-
-    resSubtotal.innerText = formatar(r.subtotal);
-    resFalhas.innerText = "+ " + formatar(r.falhas);
-
-    resCustoTotal.innerText = formatar(r.custoTotal);
-    resLucro.innerText = formatar(r.lucroValor);
-    resVenda.innerText = formatar(r.precoFinal);
-
-    // 🔥 você pode exibir depois no HTML
-    console.log("Custo/h:", r.custoHora);
-    console.log("Margem real:", r.margemReal.toFixed(1) + "%");
-}
-</script>

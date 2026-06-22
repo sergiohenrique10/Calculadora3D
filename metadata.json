@@ -1,0 +1,6 @@
+{
+  "name": "Calculadora de Impressão 3D",
+  "description": "Calcule o custo real de suas impressões 3D, considerando filamento, eletricidade, desgaste de máquina, mão de obra e lucro.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
