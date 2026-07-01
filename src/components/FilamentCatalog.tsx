@@ -78,7 +78,7 @@ export function FilamentCatalog({
   };
 
   return (
-    <div className="bg-white dark:bg-slate-900 duration-200 rounded-2xl border border-slate-150 dark:border-slate-800 p-5 shadow-sm space-y-4">
+    <div className="bg-white dark:bg-slate-900 duration-200 rounded-2xl border border-slate-200 dark:border-slate-800 p-5 shadow-sm space-y-4 form-card-contrast">
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
@@ -101,7 +101,7 @@ export function FilamentCatalog({
 
       {/* Add Filament Form Panel */}
       {isAdding && (
-        <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-xl border border-slate-150 dark:border-slate-800/80 space-y-3">
+        <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-xl border border-slate-200 dark:border-slate-800/80 space-y-3">
           <h4 className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
             Adicionar Novo Filamento / Resina
           </h4>
@@ -195,7 +195,7 @@ export function FilamentCatalog({
 
       {/* Edit Filament inline Form Panel */}
       {editingId && !isAdding && (
-        <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-xl border border-slate-150 dark:border-slate-800/80 space-y-3">
+        <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-xl border border-slate-200 dark:border-slate-800/80 space-y-3">
           <h4 className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
             Editar Filamento
           </h4>
@@ -293,7 +293,7 @@ export function FilamentCatalog({
               className={`flex items-center justify-between p-3 rounded-xl border cursor-pointer transition-all duration-200 ${
                 isSelected
                   ? "border-brand-teal bg-brand-teal/5 dark:bg-brand-teal/10 shadow-sm"
-                  : "border-slate-100 dark:border-slate-800 hover:border-slate-200 dark:hover:border-slate-700 bg-slate-50/50 dark:bg-slate-900/50"
+                  : "border-slate-200 dark:border-slate-800 hover:border-slate-350 dark:hover:border-slate-700 bg-slate-50 dark:bg-slate-900/50"
               }`}
             >
               <div className="flex items-center space-x-3 min-w-0 flex-1">

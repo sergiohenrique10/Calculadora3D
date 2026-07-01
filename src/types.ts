@@ -12,8 +12,20 @@ export interface Filamento {
 export interface Impressora {
   id: string;
   nome: string;
+  marca?: string;
+  modelo?: string;
+  volumeX?: number;
+  volumeY?: number;
+  volumeZ?: number;
   potencia: number; // Consumo em Watts (ex: 150W)
   custoDepreciacaoHora: number; // Custo de depreciação/manutenção por hora (R$)
+  horasTotais?: number;
+  horasDisponiveis?: number;
+  horasDesdeManutencao?: number;
+  status?: "disponivel" | "imprimindo" | "manutencao" | "ociosa";
+  manutencaoLubrificacao?: number; // horas desde ultima lubrificacao
+  manutencaoTrocaBico?: number; // horas desde ultima troca de bico
+  manutencaoCorreia?: number; // horas desde ultima correia
 }
 
 export interface Orcamento {
@@ -62,3 +74,108 @@ export interface Orcamento {
     lucroLiquido: number;
   };
 }
+
+// --- ERP ENHANCEMENT INTERFACES ---
+
+export interface Cliente {
+  id: string;
+  nome: string;
+  telefone: string;
+  whatsapp: string;
+  instagram: string;
+  email: string;
+  cidade: string;
+  endereco: string;
+  origem: string; // "Instagram", "Indicação", "Website", etc.
+  vip: boolean;
+  observacoes: string;
+  totalGasto: number;
+  lucroGerado: number;
+  produtosCompradosCount: number;
+}
+
+export interface Produto {
+  id: string;
+  nome: string;
+  imagem: string;
+  categoria: string;
+  descricao: string;
+  stlId?: string;
+  pesoMedio: number; // g
+  tempoMedioMinutos: number; // minutos
+  quantidade: number; // estoque disponivel
+  material: string;
+  cor: string;
+  infill: number; // %
+  suportes: "nenhum" | "normal" | "arvore";
+  posProcessamento: "nenhum" | "lixamento" | "pintura" | "complexo";
+  precoMinimo: number;
+  precoIdeal: number;
+  precoPremium: number;
+  lucro: number;
+  lucroHora: number;
+  lucroGrama: number;
+  rentabilidade: "inviavel" | "critica" | "aceitavel" | "boa" | "excelente";
+  indiceFalha: number; // %
+  ativo: boolean;
+}
+
+export interface ArquivoSTL {
+  id: string;
+  nome: string;
+  imagem: string;
+  arquivoNome: string;
+  fornecedor: string;
+  autor: string;
+  licenca: string; // "Comercial", "Pessoal", "CC BY-NC", etc.
+  categoria: string;
+  tags: string[];
+  peso: number; // g
+  tempoMinutos: number;
+  falhas: number;
+  versao: string;
+  observacoes: string;
+}
+
+export interface Pedido {
+  id: string;
+  orcamentoId?: string;
+  titulo: string;
+  clienteId: string;
+  clienteNome: string;
+  data: string;
+  status: "pagamento" | "fila" | "imprimindo" | "pos-processamento" | "embalando" | "enviado" | "entregue" | "cancelado";
+  tempoPrevistoMinutos: number;
+  tempoRealMinutos: number;
+  falhasCount: number;
+  observacoes: string;
+  operador: string;
+  impressoraId: string;
+  totalPago: number;
+  lucroLiquido: number;
+  pesoG: number;
+}
+
+export interface ItemEstoque {
+  id: string;
+  categoria: "filamentos" | "resinas" | "parafusos" | "imas" | "ferragens" | "embalagens";
+  nome: string;
+  fornecedor: string;
+  valor: number;
+  lote: string;
+  quantidade: number; // un, kg, ou rolos
+  pesoRestanteG?: number; // Para filamentos/resinas
+  estoqueMinimo: number;
+  corHex?: string; // Para filamentos/resinas
+}
+
+export interface TransacaoFinanceira {
+  id: string;
+  tipo: "receita" | "despesa";
+  categoria: string; // "Venda", "Compra Filamento", "Energia", "Manutenção", etc.
+  valor: number;
+  metodo: "pix" | "cartao" | "dinheiro" | "marketplace";
+  data: string;
+  descricao: string;
+}
+

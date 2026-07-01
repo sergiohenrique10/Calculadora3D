@@ -1,11 +1,34 @@
 import React, { useState, useEffect } from "react";
-import { Filamento, Impressora, Orcamento } from "./types";
+import { Filamento, Impressora, Orcamento, Cliente, Pedido, Produto, ItemEstoque, TransacaoFinanceira, ArquivoSTL } from "./types";
 import { CostBreakdownChart } from "./components/CostBreakdownChart";
 import { FilamentCatalog } from "./components/FilamentCatalog";
 import { PrinterCatalog } from "./components/PrinterCatalog";
 import { SavedQuotes } from "./components/SavedQuotes";
 import { GCodeParser } from "./components/GCodeParser";
+import { FarmProfitabilityPanel } from "./components/FarmProfitabilityPanel";
 import { motion, AnimatePresence } from "motion/react";
+
+// ERP Views
+import { DashboardView } from "./components/DashboardView";
+import { CRMView } from "./components/CRMView";
+import { ProductsView } from "./components/ProductsView";
+import { STLLibraryView } from "./components/STLLibraryView";
+import { KanbanView } from "./components/KanbanView";
+import { PrintersView } from "./components/PrintersView";
+import { InventoryView } from "./components/InventoryView";
+import { FinancialView } from "./components/FinancialView";
+import { RadarOportunidadesView } from "./components/RadarOportunidadesView";
+import { AIChatView } from "./components/AIChatView";
+
+// ERP Seed Data
+import {
+  MOCK_CLIENTES,
+  MOCK_PEDIDOS,
+  MOCK_ESTOQUE,
+  MOCK_FINANCEIRO,
+  MOCK_PRODUTOS,
+  MOCK_STLS
+} from "./mockData";
 
 import {
   Printer as PrinterIcon,
@@ -30,10 +53,19 @@ import {
   FileText,
   Package,
   Receipt,
-  Plus
+  Plus,
+  Sun,
+  Moon,
+  Users,
+  FolderOpen,
+  BarChart2,
+  Compass,
+  Bot,
+  Boxes,
+  Wrench
 } from "lucide-react";
 
-// --- Custom Brand Logo Component (Arte_Studio_3D) ---
+// --- Custom Brand Logo Component (ProMaker) ---
 export const ArteStudio3DLogo = ({ className = "h-11", showText = true }: { className?: string; showText?: boolean }) => {
   return (
     <div className={`flex items-center ${className}`}>
@@ -43,11 +75,11 @@ export const ArteStudio3DLogo = ({ className = "h-11", showText = true }: { clas
             <span className="text-slate-800 dark:text-white font-extrabold uppercase text-xs tracking-widest px-2.5 py-1 bg-slate-100 dark:bg-slate-800 rounded-lg text-slate-600 dark:text-slate-300 mr-1">
               Calculadora
             </span>
-            <span className="text-brand-teal dark:text-cyan-400">Arte_Studio_</span>
-            <span className="text-brand-orange">3D</span>
+            <span className="text-cyan-400">Pro</span>
+            <span className="text-brand-orange">Maker</span>
           </div>
           <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 tracking-wider uppercase mt-1.5">
-            Gerenciador de Orçamentos de Impressão 3D
+            ERP inteligente para Makers e Farms de Impressão 3D
           </span>
         </div>
       )}
@@ -125,13 +157,32 @@ const ORCAMENTOS_PADRAO: Orcamento[] = [
 ];
 
 export default function App() {
+  // --- Theme State & Dynamic Effect ---
+  const [theme] = useState<"light" | "dark">("dark");
+
+  useEffect(() => {
+    try {
+      document.documentElement.classList.add("dark");
+    } catch (e) {
+      console.warn("Could not set theme to dark", e);
+    }
+  }, []);
+
   // --- Catalogs state ---
   const [filamentos, setFilamentos] = useState<Filamento[]>([]);
   const [impressoras, setImpressoras] = useState<Impressora[]>([]);
   const [orcamentos, setOrcamentos] = useState<Orcamento[]>([]);
 
+  // --- ERP states ---
+  const [clientes, setClientes] = useState<Cliente[]>([]);
+  const [pedidos, setPedidos] = useState<Pedido[]>([]);
+  const [produtos, setProdutos] = useState<Produto[]>([]);
+  const [estoque, setEstoque] = useState<ItemEstoque[]>([]);
+  const [transacoes, setTransacoes] = useState<TransacaoFinanceira[]>([]);
+  const [stls, setStls] = useState<ArquivoSTL[]>([]);
+
   // --- Active Calculator Inputs ---
-  const [activeTab, setActiveTab] = useState<"calculadora" | "orcamentos" | "inventario">("calculadora");
+  const [activeTab, setActiveTab] = useState<string>("dashboard");
   const [orcamentoTitulo, setOrcamentoTitulo] = useState("Minha Nova Impressão 3D");
   const [selectedFilamentoId, setSelectedFilamentoId] = useState("");
   const [selectedFilamentoIdSecundario, setSelectedFilamentoIdSecundario] = useState("");
@@ -169,6 +220,7 @@ export default function App() {
   const [taxaImpostosTaxas, setTaxaImpostosTaxas] = useState<number>(0); // % plataforma + taxas
   
   const [feedbackMsg, setFeedbackMsg] = useState<{ text: string; type: "success" | "info" | "error" } | null>(null);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState<boolean>(false);
 
   // --- Initialize states from localStorage ---
   useEffect(() => {
@@ -176,6 +228,13 @@ export default function App() {
       const savedFilamentos = localStorage.getItem("c3d_filamentos");
       const savedImpressoras = localStorage.getItem("c3d_impressoras");
       const savedOrcamentos = localStorage.getItem("c3d_orcamentos");
+
+      const savedClientes = localStorage.getItem("erp_clientes");
+      const savedPedidos = localStorage.getItem("erp_pedidos");
+      const savedProdutos = localStorage.getItem("erp_produtos");
+      const savedEstoque = localStorage.getItem("erp_estoque");
+      const savedTransacoes = localStorage.getItem("erp_transacoes");
+      const savedStls = localStorage.getItem("erp_stls");
 
       if (savedFilamentos) {
         const parsed = JSON.parse(savedFilamentos);
@@ -207,6 +266,48 @@ export default function App() {
         localStorage.setItem("c3d_orcamentos", JSON.stringify(ORCAMENTOS_PADRAO));
         setOrcamentos(ORCAMENTOS_PADRAO);
       }
+
+      if (savedClientes) {
+        setClientes(JSON.parse(savedClientes));
+      } else {
+        localStorage.setItem("erp_clientes", JSON.stringify(MOCK_CLIENTES));
+        setClientes(MOCK_CLIENTES);
+      }
+
+      if (savedPedidos) {
+        setPedidos(JSON.parse(savedPedidos));
+      } else {
+        localStorage.setItem("erp_pedidos", JSON.stringify(MOCK_PEDIDOS));
+        setPedidos(MOCK_PEDIDOS);
+      }
+
+      if (savedProdutos) {
+        setProdutos(JSON.parse(savedProdutos));
+      } else {
+        localStorage.setItem("erp_produtos", JSON.stringify(MOCK_PRODUTOS));
+        setProdutos(MOCK_PRODUTOS);
+      }
+
+      if (savedEstoque) {
+        setEstoque(JSON.parse(savedEstoque));
+      } else {
+        localStorage.setItem("erp_estoque", JSON.stringify(MOCK_ESTOQUE));
+        setEstoque(MOCK_ESTOQUE);
+      }
+
+      if (savedTransacoes) {
+        setTransacoes(JSON.parse(savedTransacoes));
+      } else {
+        localStorage.setItem("erp_transacoes", JSON.stringify(MOCK_FINANCEIRO));
+        setTransacoes(MOCK_FINANCEIRO);
+      }
+
+      if (savedStls) {
+        setStls(JSON.parse(savedStls));
+      } else {
+        localStorage.setItem("erp_stls", JSON.stringify(MOCK_STLS));
+        setStls(MOCK_STLS);
+      }
     } catch (e) {
       console.error("Falha ao recuperar dados do localStorage", e);
     }
@@ -226,6 +327,180 @@ export default function App() {
   const saveOrcamentosList = (list: Orcamento[]) => {
     setOrcamentos(list);
     localStorage.setItem("c3d_orcamentos", JSON.stringify(list));
+  };
+
+  // --- ERP Actions ---
+  const handleAddCliente = (newCli: Omit<Cliente, "id" | "totalGasto" | "lucroGerado" | "produtosCompradosCount">) => {
+    const fresh: Cliente = {
+      ...newCli,
+      id: "cli-" + Date.now(),
+      totalGasto: 0,
+      lucroGerado: 0,
+      produtosCompradosCount: 0
+    };
+    const newList = [fresh, ...clientes];
+    setClientes(newList);
+    localStorage.setItem("erp_clientes", JSON.stringify(newList));
+    triggerFeedback("Cliente adicionado ao CRM com sucesso!", "success");
+  };
+
+  const handleToggleVip = (id: string) => {
+    const newList = clientes.map(c => c.id === id ? { ...c, vip: !c.vip } : c);
+    setClientes(newList);
+    localStorage.setItem("erp_clientes", JSON.stringify(newList));
+    triggerFeedback("Status VIP do cliente atualizado!", "success");
+  };
+
+  const handleUpdatePedidoStatus = (id: string, status: Pedido["status"]) => {
+    const newList = pedidos.map(p => p.id === id ? { ...p, status } : p);
+    setPedidos(newList);
+    localStorage.setItem("erp_pedidos", JSON.stringify(newList));
+    triggerFeedback("Status da produção atualizado!", "success");
+  };
+
+  const handleIncrementFail = (id: string) => {
+    const newList = pedidos.map(p => p.id === id ? { ...p, falhasCount: p.falhasCount + 1 } : p);
+    setPedidos(newList);
+    localStorage.setItem("erp_pedidos", JSON.stringify(newList));
+    triggerFeedback("Falha registrada com sucesso!", "info");
+  };
+
+  const handleAddPedido = (newPed: Omit<Pedido, "id" | "data">) => {
+    const fresh: Pedido = {
+      ...newPed,
+      id: "PED-" + (1000 + pedidos.length + 1),
+      data: new Date().toISOString()
+    };
+    const newList = [fresh, ...pedidos];
+    setPedidos(newList);
+    localStorage.setItem("erp_pedidos", JSON.stringify(newList));
+    triggerFeedback("Ordem de serviço adicionada ao Kanban!", "success");
+  };
+
+  const handleAddProduto = (newProd: Omit<Produto, "id" | "lucro" | "lucroHora" | "lucroGrama" | "rentabilidade">) => {
+    const lucro = newProd.precoIdeal - (newProd.pesoMedio * 0.12);
+    const profitPerHour = newProd.tempoMedioMinutos > 0 ? (lucro / (newProd.tempoMedioMinutos / 60)) : 10;
+    const profitPerGram = newProd.pesoMedio > 0 ? (lucro / newProd.pesoMedio) : 0.8;
+    
+    let rentabilidade: Produto["rentabilidade"] = "aceitavel";
+    if (profitPerHour < 6) rentabilidade = "critica";
+    else if (profitPerHour < 10) rentabilidade = "aceitavel";
+    else if (profitPerHour < 15) rentabilidade = "boa";
+    else rentabilidade = "excelente";
+
+    const fresh: Produto = {
+      ...newProd,
+      id: "prod-" + Date.now(),
+      lucro,
+      lucroHora: profitPerHour,
+      lucroGrama: profitPerGram,
+      rentabilidade
+    };
+    const newList = [fresh, ...produtos];
+    setProdutos(newList);
+    localStorage.setItem("erp_produtos", JSON.stringify(newList));
+    triggerFeedback("Novo produto adicionado ao catálogo!", "success");
+  };
+
+  const handleToggleProductActive = (id: string) => {
+    const newList = produtos.map(p => p.id === id ? { ...p, ativo: !p.ativo } : p);
+    setProdutos(newList);
+    localStorage.setItem("erp_produtos", JSON.stringify(newList));
+    triggerFeedback("Status de visibilidade do produto alterado!", "info");
+  };
+
+  const handleDeleteProduto = (id: string) => {
+    const newList = produtos.filter(p => p.id !== id);
+    setProdutos(newList);
+    localStorage.setItem("erp_produtos", JSON.stringify(newList));
+    triggerFeedback("Produto removido do catálogo.", "info");
+  };
+
+  const handleAddSTL = (newStl: Omit<ArquivoSTL, "id" | "falhas" | "versao">) => {
+    const fresh: ArquivoSTL = {
+      ...newStl,
+      id: "stl-" + Date.now(),
+      falhas: 0,
+      versao: "1.0"
+    };
+    const newList = [fresh, ...stls];
+    setStls(newList);
+    localStorage.setItem("erp_stls", JSON.stringify(newList));
+    triggerFeedback("STL importado com sucesso na biblioteca!", "success");
+  };
+
+  const handleDeleteSTL = (id: string) => {
+    const newList = stls.filter(s => s.id !== id);
+    setStls(newList);
+    localStorage.setItem("erp_stls", JSON.stringify(newList));
+    triggerFeedback("Arquivo STL removido.", "info");
+  };
+
+  const handleAddItemEstoque = (newItem: Omit<ItemEstoque, "id">) => {
+    const fresh: ItemEstoque = {
+      ...newItem,
+      id: "est-" + Date.now()
+    };
+    const newList = [fresh, ...estoque];
+    setEstoque(newList);
+    localStorage.setItem("erp_estoque", JSON.stringify(newList));
+    triggerFeedback("Item cadastrado no estoque!", "success");
+  };
+
+  const handleDeleteItemEstoque = (id: string) => {
+    const newList = estoque.filter(item => item.id !== id);
+    setEstoque(newList);
+    localStorage.setItem("erp_estoque", JSON.stringify(newList));
+    triggerFeedback("Insumo excluído do estoque.", "info");
+  };
+
+  const handleUpdateQuantity = (id: string, nextQty: number) => {
+    const newList = estoque.map(item => item.id === id ? { ...item, quantidade: nextQty } : item);
+    setEstoque(newList);
+    localStorage.setItem("erp_estoque", JSON.stringify(newList));
+  };
+
+  const handleAddTransacao = (newTx: Omit<TransacaoFinanceira, "id" | "data">) => {
+    const fresh: TransacaoFinanceira = {
+      ...newTx,
+      id: "tx-" + Date.now(),
+      data: new Date().toISOString()
+    };
+    const newList = [fresh, ...transacoes];
+    setTransacoes(newList);
+    localStorage.setItem("erp_transacoes", JSON.stringify(newList));
+    triggerFeedback("Transação financeira registrada!", "success");
+  };
+
+  const handleDeleteTransacao = (id: string) => {
+    const newList = transacoes.filter(tx => tx.id !== id);
+    setTransacoes(newList);
+    localStorage.setItem("erp_transacoes", JSON.stringify(newList));
+    triggerFeedback("Registro financeiro removido.", "info");
+  };
+
+  const handleExecuteMaintenance = (id: string, type: "lubrificacao" | "bico" | "correia") => {
+    const newList = impressoras.map(imp => {
+      if (imp.id === id) {
+        return {
+          ...imp,
+          manutencaoLubrificacao: type === "lubrificacao" ? 0 : imp.manutencaoLubrificacao,
+          manutencaoTrocaBico: type === "bico" ? 0 : imp.manutencaoTrocaBico,
+          manutencaoCorreia: type === "correia" ? 0 : imp.manutencaoCorreia,
+          horasDesdeManutencao: 0
+        };
+      }
+      return imp;
+    });
+    setImpressoras(newList);
+    localStorage.setItem("c3d_impressoras", JSON.stringify(newList));
+    triggerFeedback("Manutenção preventiva reiniciada com sucesso!", "success");
+  };
+
+  const handleUpdatePrinterStatus = (id: string, status: Impressora["status"]) => {
+    const newList = impressoras.map(imp => imp.id === id ? { ...imp, status } : imp);
+    setImpressoras(newList);
+    localStorage.setItem("c3d_impressoras", JSON.stringify(newList));
   };
 
   // --- Filament catalog actions ---
@@ -702,97 +977,343 @@ _Calculadora de Impressão 3D Premium_`;
     reader.readAsText(file);
   };
 
+  const handleOpenCalculatorWithSTL = (stl: ArquivoSTL) => {
+    setPesoPeca(stl.peso);
+    setPesoSuporte(0);
+    setTempoImpressaoHoras(Math.floor(stl.tempoMinutos / 60));
+    setTempoImpressaoMinutos(stl.tempoMinutos % 60);
+    setOrcamentoTitulo(stl.nome);
+    setActiveTab("calculadora");
+    triggerFeedback(`Parâmetros de fatiamento de ${stl.nome} importados!`, "success");
+  };
+
+  const handleCreateProductFromQuote = () => {
+    handleAddProduto({
+      nome: orcamentoTitulo,
+      imagem: "https://images.unsplash.com/photo-1608889175123-8ec330b86f84?q=80&w=200&auto=format&fit=crop",
+      categoria: "Colecionáveis",
+      descricao: "Produto cadastrado automaticamente a partir do fatiador/calculadora.",
+      pesoMedio: totalPesoG,
+      tempoMedioMinutos: totalTempoMinutos,
+      quantidade: 1,
+      material: activeFilamento?.nome || "PLA Premium",
+      cor: "Preto",
+      infill: 20,
+      suportes: "normal" as "normal" | "nenhum" | "arvore",
+      posProcessamento: "nenhum" as "nenhum" | "lixamento" | "pintura" | "complexo",
+      precoMinimo: custoProducaoTotal * 1.2,
+      precoIdeal: precoVendaSugerido,
+      precoPremium: precoVendaSugerido * 1.5,
+      indiceFalha: 5,
+      ativo: true
+    });
+    setActiveTab("produtos");
+  };
+
   // -- Trigger default printing flow of browser --
   const handlePrintQuote = () => {
     window.print();
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 font-sans transition-colors duration-200">
+    <div className="min-h-screen bg-slate-950 text-slate-100 font-sans transition-colors duration-200 flex flex-col lg:flex-row">
       
       {/* Toast feedback alerts */}
       {feedbackMsg && (
         <div className="fixed bottom-5 right-5 z-50 flex items-center space-x-2 bg-slate-900 text-white rounded-xl shadow-xl px-4 py-3 border border-slate-800 animate-slide-up">
           <span className={`w-2.5 h-2.5 rounded-full ${
-            feedbackMsg.type === "success" ? "bg-brand-orange" : feedbackMsg.type === "error" ? "bg-red-400" : "bg-brand-teal"
+            feedbackMsg.type === "success" ? "bg-cyan-400" : feedbackMsg.type === "error" ? "bg-red-400" : "bg-cyan-400"
           }`} />
           <span className="text-xs font-semibold">{feedbackMsg.text}</span>
         </div>
       )}
 
-      {/* Styled Header */}
-      <header className="sticky top-0 z-40 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200/60 dark:border-slate-800/80">
-        <div className="max-w-7xl mx-auto px-4 py-3 flex flex-col sm:flex-row items-center justify-between gap-3">
-          
-          <ArteStudio3DLogo />
-
-          {/* Navigation Tab selection and global actions */}
-          <div className="flex flex-wrap items-center gap-2.5">
-            <div className="bg-slate-100 dark:bg-slate-800 p-1 rounded-xl flex items-center">
-              <button
-                onClick={() => setActiveTab("calculadora")}
-                className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors cursor-pointer ${
-                  activeTab === "calculadora"
-                    ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-sm"
-                    : "text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200"
-                }`}
-              >
-                <Calculator size={13} />
-                <span>Calculadora</span>
-              </button>
-              <button
-                onClick={() => setActiveTab("orcamentos")}
-                className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors cursor-pointer ${
-                  activeTab === "orcamentos"
-                    ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-sm"
-                    : "text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200"
-                }`}
-              >
-                <Receipt size={13} />
-                <span>Orçamentos Salvos</span>
-              </button>
-              <button
-                onClick={() => setActiveTab("inventario")}
-                className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors cursor-pointer ${
-                  activeTab === "inventario"
-                    ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-sm"
-                    : "text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200"
-                }`}
-              >
-                <Briefcase size={13} />
-                <span>Inventário & Perfis</span>
-              </button>
-            </div>
-
-            {/* JSON Backups Utility panel */}
-            <div className="flex items-center space-x-1.5 ml-1 border-l pl-2.5 border-slate-200 dark:border-slate-800">
-              <button
-                onClick={handleExportJSON}
-                className="p-2 hover:bg-slate-100 dark:hover:bg-slate-850 rounded-lg text-slate-500 dark:text-slate-400 hover:text-slate-800 transition-colors"
-                title="Exportar backup completo"
-              >
-                <Download size={14} />
-              </button>
-              <label
-                className="p-2 hover:bg-slate-100 dark:hover:bg-slate-850 rounded-lg text-slate-500 dark:text-slate-400 hover:text-slate-800 transition-colors cursor-pointer"
-                title="Importar backup (.json)"
-              >
-                <Upload size={14} />
-                <input
-                  type="file"
-                  accept=".json"
-                  onChange={handleImportJSON}
-                  className="hidden"
-                />
-              </label>
-            </div>
-          </div>
+      {/* MOBILE HEADER */}
+      <header className="lg:hidden bg-slate-900 border-b border-slate-800 p-4 flex items-center justify-between sticky top-0 z-40">
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-black uppercase tracking-widest px-2 py-0.5 bg-slate-800 rounded text-cyan-400">ERP</span>
+          <span className="font-extrabold text-sm text-white">ProMaker</span>
         </div>
+        <button 
+          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          className="p-1.5 text-slate-400 hover:text-white bg-slate-800 rounded-lg"
+        >
+          <Activity size={18} />
+        </button>
       </header>
 
-      {/* Main Container */}
-      <main className="max-w-7xl mx-auto px-4 py-6 sm:py-8">
+      {/* SIDEBAR DRAWER FOR MOBILE AND FIXED FOR DESKTOP */}
+      <aside className={`
+        ${mobileMenuOpen ? "block" : "hidden"} lg:flex lg:flex-col
+        fixed lg:sticky top-14 lg:top-0 left-0 z-30
+        w-full lg:w-64 h-[calc(100vh-3.5rem)] lg:h-screen
+        bg-slate-900 border-r border-slate-850
+        overflow-y-auto flex flex-col justify-between shrink-0
+      `}>
+        <div className="p-4 space-y-5">
+          {/* Brand logo in desktop only */}
+          <div className="hidden lg:flex flex-col border-b border-slate-800 pb-4">
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] font-black uppercase tracking-widest px-2 py-0.5 bg-slate-800 rounded text-cyan-400">SaaS ERP</span>
+              <span className="font-black text-sm tracking-tight text-white">ProMaker</span>
+            </div>
+            <span className="text-[10px] font-bold text-slate-500 uppercase mt-1">ERP inteligente para Makers e Farms de Impressão 3D</span>
+          </div>
+
+          {/* Nav groups */}
+          <nav className="space-y-4">
+            {[
+              {
+                title: "Principal",
+                items: [
+                  { id: "dashboard", label: "Dashboard Executivo", icon: BarChart2 },
+                  { id: "clientes", label: "Clientes (CRM)", icon: Users },
+                ]
+              },
+              {
+                title: "Operacional",
+                items: [
+                  { id: "pedidos", label: "Produção (Kanban)", icon: Activity },
+                  { id: "stllibrary", label: "Biblioteca STL", icon: FolderOpen },
+                  { id: "estoque", label: "Estoque & Insumos", icon: Boxes },
+                  { id: "impressoras", label: "Impressoras (Farm)", icon: PrinterIcon },
+                ]
+              },
+              {
+                title: "Comercial",
+                items: [
+                  { id: "calculadora", label: "Calculadora 3D", icon: Calculator },
+                  { id: "orcamentos", label: "Orçamentos Salvos", icon: Receipt },
+                  { id: "produtos", label: "Catálogo Produtos", icon: Package },
+                ]
+              },
+              {
+                title: "Inteligência & Analytics",
+                items: [
+                  { id: "radar", label: "Radar Oportunidades", icon: Compass },
+                  { id: "ia_chat", label: "Assistente IA (Chat)", icon: Bot },
+                ]
+              },
+              {
+                title: "Parâmetros",
+                items: [
+                  { id: "perfis_custos", label: "Perfis de Custos", icon: Wrench },
+                ]
+              }
+            ].map((group, idx) => (
+              <div key={idx} className="space-y-1">
+                <h4 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest px-2">{group.title}</h4>
+                <div className="space-y-0.5">
+                  {group.items.map((item) => {
+                    const Icon = item.icon;
+                    const isActive = activeTab === item.id;
+                    return (
+                      <button
+                        key={item.id}
+                        onClick={() => {
+                          setActiveTab(item.id);
+                          setMobileMenuOpen(false);
+                        }}
+                        className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                          isActive
+                            ? "bg-slate-800 text-cyan-400 border-l-4 border-cyan-400"
+                            : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/40"
+                        }`}
+                      >
+                        <Icon size={14} className={isActive ? "text-cyan-400" : "text-slate-400"} />
+                        <span>{item.label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+          </nav>
+        </div>
+
+        {/* JSON Backup tools in sidebar footer */}
+        <div className="p-4 border-t border-slate-800 bg-slate-900/40 space-y-2">
+          <div className="flex items-center justify-between text-xs text-slate-500 font-bold uppercase tracking-wider">
+            <span>Backup de Dados</span>
+            <span className="text-[10px] text-cyan-400 font-mono">v1.2</span>
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <button
+              onClick={handleExportJSON}
+              className="flex items-center justify-center gap-1.5 py-1.5 px-2 bg-slate-800 hover:bg-slate-750 text-slate-300 rounded-lg text-[10px] font-bold cursor-pointer transition"
+              title="Exportar backup completo (.json)"
+            >
+              <Download size={11} />
+              <span>Exportar</span>
+            </button>
+            <label
+              className="flex items-center justify-center gap-1.5 py-1.5 px-2 bg-slate-800 hover:bg-slate-750 text-slate-300 rounded-lg text-[10px] font-bold cursor-pointer transition text-center"
+              title="Importar backup (.json)"
+            >
+              <Upload size={11} />
+              <span>Importar</span>
+              <input
+                type="file"
+                accept=".json"
+                onChange={handleImportJSON}
+                className="hidden"
+              />
+            </label>
+          </div>
+        </div>
+      </aside>
+
+      {/* MAIN CONTENT AREA */}
+      <div className="flex-1 flex flex-col min-h-0 bg-slate-950 overflow-y-auto">
         
+        {/* TOP STATUS BAR */}
+        <header className="sticky top-0 z-20 bg-slate-950/80 backdrop-blur-md border-b border-slate-900 px-6 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <h1 className="text-sm font-extrabold text-white uppercase tracking-wider">
+              {activeTab === "dashboard" && "Dashboard Geral"}
+              {activeTab === "clientes" && "CRM & Clientes"}
+              {activeTab === "pedidos" && "Farm de Produção"}
+              {activeTab === "stllibrary" && "Biblioteca STL"}
+              {activeTab === "estoque" && "Insumos & Estoque"}
+              {activeTab === "impressoras" && "Maquinários & Telemetria"}
+              {activeTab === "calculadora" && "Calculadora de Custos 3D"}
+              {activeTab === "orcamentos" && "Orçamentos de Clientes"}
+              {activeTab === "produtos" && "Catálogo de Produtos"}
+              {activeTab === "radar" && "Radar de Oportunidades"}
+              {activeTab === "ia_chat" && "Assistente de Negócio IA"}
+              {activeTab === "perfis_custos" && "Perfis de Custos de Farm"}
+            </h1>
+          </div>
+          
+          <div className="flex items-center gap-4">
+            {/* KPI pill indicators */}
+            <div className="hidden md:flex items-center gap-3 bg-slate-900 border border-slate-800 rounded-xl py-1 px-3">
+              <span className="text-[10px] font-bold text-slate-500 uppercase">Farm status:</span>
+              <span className="flex items-center gap-1 text-[11px] font-semibold text-emerald-400">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span>
+                ONLINE
+              </span>
+              <span className="text-slate-700">|</span>
+              <span className="text-[11px] font-semibold text-slate-300">
+                {pedidos.filter(p => !["entregue", "cancelado"].includes(p.status)).length} Ativos
+              </span>
+            </div>
+
+            <div className="flex items-center gap-1 bg-slate-900 border border-slate-800 rounded-xl px-2 py-1">
+              <span className="text-[10px] font-mono text-slate-400">Moeda: R$ (BRL)</span>
+            </div>
+          </div>
+        </header>
+
+        {/* CONTAINER FOR ACTIVE TAB CONTENT */}
+        <div className="p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto space-y-6">
+        
+        {/* ERP Views */}
+        {activeTab === "dashboard" && (
+          <DashboardView
+            clientes={clientes}
+            pedidos={pedidos}
+            impressoras={impressoras}
+            estoque={estoque}
+            onNavigate={(tab) => setActiveTab(tab)}
+          />
+        )}
+
+        {activeTab === "clientes" && (
+          <CRMView
+            clientes={clientes}
+            onAddCliente={handleAddCliente}
+            onToggleVip={handleToggleVip}
+          />
+        )}
+
+        {activeTab === "pedidos" && (
+          <KanbanView
+            pedidos={pedidos}
+            impressoras={impressoras}
+            clientes={clientes}
+            onUpdateStatus={handleUpdatePedidoStatus}
+            onIncrementFail={handleIncrementFail}
+            onAddPedido={handleAddPedido}
+          />
+        )}
+
+        {activeTab === "stllibrary" && (
+          <STLLibraryView
+            stls={stls}
+            filamentos={filamentos}
+            impressoras={impressoras}
+            onAddSTL={handleAddSTL}
+            onDeleteSTL={handleDeleteSTL}
+            onOpenCalculatorWithSTL={handleOpenCalculatorWithSTL}
+          />
+        )}
+
+        {activeTab === "estoque" && (
+          <InventoryView
+            estoque={estoque}
+            onAddItemEstoque={handleAddItemEstoque}
+            onDeleteItemEstoque={handleDeleteItemEstoque}
+            onUpdateQuantity={handleUpdateQuantity}
+          />
+        )}
+
+        {activeTab === "impressoras" && (
+          <PrintersView
+            impressoras={impressoras}
+            onAddImpressora={handleAddImpressora}
+            onDeleteImpressora={handleDeleteImpressora}
+            onExecuteMaintenance={handleExecuteMaintenance}
+            onUpdatePrinterStatus={handleUpdatePrinterStatus}
+          />
+        )}
+
+        {activeTab === "produtos" && (
+          <ProductsView
+            produtos={produtos}
+            stls={stls}
+            onAddProduto={handleAddProduto}
+            onToggleAtivo={handleToggleProductActive}
+            onDeleteProduto={handleDeleteProduto}
+          />
+        )}
+
+        {activeTab === "radar" && (
+          <RadarOportunidadesView />
+        )}
+
+        {activeTab === "ia_chat" && (
+          <AIChatView
+            clientes={clientes}
+            pedidos={pedidos}
+            produtos={produtos}
+            estoque={estoque}
+            impressoras={impressoras}
+            transacoes={transacoes}
+          />
+        )}
+
+        {activeTab === "perfis_custos" && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
+            <FilamentCatalog
+              filamentos={filamentos}
+              onAddFilamento={handleAddFilamento}
+              onDeleteFilamento={handleDeleteFilamento}
+              onUpdateFilamento={handleUpdateFilamento}
+              selectedFilamentoId={selectedFilamentoId}
+              onSelectFilamento={(id) => setSelectedFilamentoId(id)}
+            />
+            <PrinterCatalog
+              impressoras={impressoras}
+              onAddImpressora={handleAddImpressora}
+              onDeleteImpressora={handleDeleteImpressora}
+              onUpdateImpressora={handleUpdateImpressora}
+              selectedImpressoraId={selectedImpressoraId}
+              onSelectImpressora={(id) => setSelectedImpressoraId(id)}
+            />
+          </div>
+        )}
+
         {activeTab === "calculadora" ? (
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
             
@@ -800,10 +1321,10 @@ _Calculadora de Impressão 3D Premium_`;
             <div className="lg:col-span-7 space-y-6">
               
               {/* Orçamento Titulação Card */}
-              <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-150 dark:border-slate-850 p-4 sm:p-5 shadow-sm space-y-3">
+              <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-850 p-4 sm:p-5 shadow-sm space-y-3 form-card-contrast">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div className="flex-1">
-                    <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1 block">
+                    <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1 block">
                       Descrição do Serviço / Objeto do Orçamento
                     </label>
                     <input
@@ -838,8 +1359,8 @@ _Calculadora de Impressão 3D Premium_`;
               <GCodeParser onDataParsed={handleGCodeDataParsed} />
 
               {/* Parâmetros do Filamento */}
-              <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-150 dark:border-slate-850 p-5 shadow-sm space-y-4">
-                <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+              <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-850 p-5 shadow-sm space-y-4 form-card-contrast">
+                <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
                   <div className="flex items-center space-x-2">
                     <span className="p-1.5 bg-brand-teal/10 text-brand-teal dark:bg-brand-teal/20 dark:text-brand-teal rounded-lg">
                       <Layers size={15} />
@@ -908,7 +1429,7 @@ _Calculadora de Impressão 3D Premium_`;
                 )}
 
                 {/* Opção para ativar Segundo Filamento / Multi-material */}
-                <div className="pt-3 border-t border-slate-100 dark:border-slate-800/60 flex items-center justify-between">
+                <div className="pt-3 border-t border-slate-200 dark:border-slate-800/60 flex items-center justify-between">
                   <span className="text-xs font-bold text-slate-700 dark:text-slate-300">
                     Usa mais de um filamento neste projeto (Multi-material)?
                   </span>
@@ -929,7 +1450,7 @@ _Calculadora de Impressão 3D Premium_`;
                       initial={{ height: 0, opacity: 0, marginTop: 0 }}
                       animate={{ height: "auto", opacity: 1, marginTop: 12 }}
                       exit={{ height: 0, opacity: 0, marginTop: 0 }}
-                      className="overflow-hidden space-y-4 border-t border-dashed border-slate-100 dark:border-slate-800 pt-4"
+                      className="overflow-hidden space-y-4 border-t border-dashed border-slate-200 dark:border-slate-800 pt-4"
                     >
                       <div className="flex items-center justify-between">
                         <h4 className="text-xs font-bold text-slate-700 dark:text-slate-300">
@@ -983,7 +1504,7 @@ _Calculadora de Impressão 3D Premium_`;
 
                       {/* --- FILAMENTO 3 --- */}
                       {!multiMaterialActive3 ? (
-                        <div className="pt-2 border-t border-dashed border-slate-100 dark:border-slate-805/60">
+                        <div className="pt-2 border-t border-dashed border-slate-200 dark:border-slate-805/60">
                           <button
                             type="button"
                             onClick={() => {
@@ -999,7 +1520,7 @@ _Calculadora de Impressão 3D Premium_`;
                           </button>
                         </div>
                       ) : (
-                        <div className="pt-4 border-t border-dashed border-slate-150 dark:border-slate-800/60 space-y-4">
+                        <div className="pt-4 border-t border-dashed border-slate-200 dark:border-slate-800/60 space-y-4">
                           <div className="flex items-center justify-between">
                             <h4 className="text-xs font-bold text-slate-700 dark:text-slate-300">
                               3º Filamento
@@ -1062,7 +1583,7 @@ _Calculadora de Impressão 3D Premium_`;
 
                           {/* --- FILAMENTO 4 --- */}
                           {!multiMaterialActive4 ? (
-                            <div className="pt-2 border-t border-dashed border-slate-100 dark:border-slate-800/60">
+                            <div className="pt-2 border-t border-dashed border-slate-200 dark:border-slate-800/60">
                               <button
                                 type="button"
                                 onClick={() => {
@@ -1078,7 +1599,7 @@ _Calculadora de Impressão 3D Premium_`;
                               </button>
                             </div>
                           ) : (
-                            <div className="pt-4 border-t border-dashed border-slate-150 dark:border-slate-800/60 space-y-4">
+                            <div className="pt-4 border-t border-dashed border-slate-200 dark:border-slate-800/60 space-y-4">
                               <div className="flex items-center justify-between">
                                 <h4 className="text-xs font-bold text-slate-700 dark:text-slate-300">
                                   4º Filamento
@@ -1148,8 +1669,8 @@ _Calculadora de Impressão 3D Premium_`;
               </div>
 
               {/* Tempo de Impressão & Energia */}
-              <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-150 dark:border-slate-850 p-5 shadow-sm space-y-4">
-                <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+              <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-850 p-5 shadow-sm space-y-4 form-card-contrast">
+                <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
                   <div className="flex items-center space-x-2">
                     <span className="p-1.5 bg-brand-teal/10 text-brand-teal dark:bg-brand-teal/20 dark:text-brand-teal rounded-lg">
                       <Clock size={15} />
@@ -1163,7 +1684,7 @@ _Calculadora de Impressão 3D Premium_`;
                   <select
                     value={selectedImpressoraId}
                     onChange={(e) => setSelectedImpressoraId(e.target.value)}
-                    className="text-xs p-1.5 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-lg font-medium text-slate-800 dark:text-white-200 select-none max-w-[190px]"
+                    className="text-xs p-1.5 pr-8 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-lg font-medium text-slate-800 dark:text-white select-none max-w-[190px]"
                   >
                     {impressoras.map((p) => (
                       <option key={p.id} value={p.id}>
@@ -1238,8 +1759,8 @@ _Calculadora de Impressão 3D Premium_`;
               </div>
 
               {/* Mão de Obra & Setup */}
-              <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-150 dark:border-slate-850 p-5 shadow-sm space-y-4">
-                <div className="flex items-center space-x-2 border-b border-slate-100 dark:border-slate-800 pb-3">
+              <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-850 p-5 shadow-sm space-y-4 form-card-contrast">
+                <div className="flex items-center space-x-2 border-b border-slate-200 dark:border-slate-800 pb-3">
                   <span className="p-1.5 bg-brand-teal/10 text-brand-teal dark:bg-brand-teal/20 dark:text-brand-teal rounded-lg">
                     <Briefcase size={15} />
                   </span>
@@ -1292,8 +1813,8 @@ _Calculadora de Impressão 3D Premium_`;
               </div>
 
               {/* Embalagem, Plataformas e Outros Custos */}
-              <div id="cost-packaging-others" className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-150 dark:border-slate-850 p-5 shadow-sm space-y-4">
-                <div className="flex items-center gap-2 border-b border-slate-100 dark:border-slate-800 pb-3">
+              <div id="cost-packaging-others" className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-850 p-5 shadow-sm space-y-4 form-card-contrast">
+                <div className="flex items-center gap-2 border-b border-slate-200 dark:border-slate-800 pb-3">
                   <span className="p-1.5 bg-brand-teal/10 text-brand-teal dark:bg-brand-teal/20 dark:text-brand-teal rounded-lg">
                     <Package size={15} />
                   </span>
@@ -1320,7 +1841,7 @@ _Calculadora de Impressão 3D Premium_`;
                       className="w-full font-mono text-xs p-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl focus:outline-brand-teal text-slate-900 dark:text-white"
                       placeholder="Ex: 5.00"
                     />
-                    <span className="text-[10px] text-slate-400 block leading-tight">Caixas, plástico bolha, fitas</span>
+                    <span className="text-[10px] text-slate-500 dark:text-slate-400 block leading-tight">Caixas, plástico bolha, fitas</span>
                   </div>
 
                   {/* Outros Custos */}
@@ -1340,7 +1861,7 @@ _Calculadora de Impressão 3D Premium_`;
                       className="w-full font-mono text-xs p-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl focus:outline-brand-teal text-slate-900 dark:text-white"
                       placeholder="Ex: 2.50"
                     />
-                    <span className="text-[10px] text-slate-400 block leading-tight">Cola, spray, parafusos, lixas</span>
+                    <span className="text-[10px] text-slate-500 dark:text-slate-400 block leading-tight">Cola, spray, parafusos, lixas</span>
                   </div>
 
                   {/* Impostos / Comissão de Plataforma */}
@@ -1361,14 +1882,14 @@ _Calculadora de Impressão 3D Premium_`;
                       className="w-full font-mono text-xs p-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl focus:outline-brand-teal text-slate-900 dark:text-white"
                       placeholder="Ex: 12"
                     />
-                    <span className="text-[10px] text-slate-400 block leading-tight">Comissão MercadoLivre/Shopee, imposto</span>
+                    <span className="text-[10px] text-slate-500 dark:text-slate-400 block leading-tight">Comissão MercadoLivre/Shopee, imposto</span>
                   </div>
                 </div>
               </div>
 
               {/* Risco de Falha & Margem de Lucro */}
-              <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-150 dark:border-slate-850 p-5 shadow-sm space-y-4">
-                <div className="flex items-center space-x-2 border-b border-slate-100 dark:border-slate-800 pb-3">
+              <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-850 p-5 shadow-sm space-y-4 form-card-contrast">
+                <div className="flex items-center space-x-2 border-b border-slate-200 dark:border-slate-800 pb-3">
                   <span className="p-1.5 bg-brand-orange/10 text-brand-orange dark:bg-brand-orange/20 dark:text-brand-orange rounded-lg">
                     <TrendingUp size={15} />
                   </span>
@@ -1406,7 +1927,7 @@ _Calculadora de Impressão 3D Premium_`;
                   </div>
 
                   {/* Margem de Lucro */}
-                  <div className="space-y-4 sm:border-l sm:pl-4 border-slate-100 dark:border-slate-800">
+                  <div className="space-y-4 sm:border-l sm:pl-4 border-slate-200 dark:border-slate-800">
                     <div>
                       <label className="text-xs font-bold text-slate-600 dark:text-slate-300 block mb-1.5">
                         Definição do Lucro / Margem
@@ -1494,7 +2015,7 @@ _Calculadora de Impressão 3D Premium_`;
                             placeholder="Ex: 73.00"
                           />
                         </div>
-                        <div className="text-[10px] text-slate-400 leading-normal bg-slate-50 dark:bg-slate-950 p-2 rounded-lg border border-slate-100 dark:border-slate-900">
+                        <div className="text-[10px] text-slate-400 leading-normal bg-slate-50 dark:bg-slate-950 p-2 rounded-lg border border-slate-200 dark:border-slate-900">
                           Preço: <span className="font-mono text-slate-700 dark:text-slate-300 font-bold">R$ {Number(precoVendaAlvo).toFixed(2)}</span>
                           <br />
                           Custo de Produção: <span className="font-mono text-slate-700 dark:text-slate-300 font-bold">R$ {custoProducaoTotal.toFixed(2)}</span>
@@ -1514,7 +2035,7 @@ _Calculadora de Impressão 3D Premium_`;
             <div className="lg:col-span-5 space-y-6">
               
               {/* Resumo Final de Custos Big Card */}
-              <div className="bg-slate-900 border border-slate-950 text-white rounded-3xl p-6 sm:p-7 shadow-xl space-y-6 relative overflow-hidden">
+              <div className="bg-slate-900 border border-slate-950 text-white rounded-3xl p-6 sm:p-7 shadow-xl space-y-6 relative overflow-hidden form-card-contrast">
                 <div className="absolute top-0 right-0 w-32 h-32 bg-brand-orange/15 rounded-full blur-2xl pointer-events-none" />
                 
                 <div className="flex justify-between items-center pb-4 border-b border-white/5">
@@ -1615,7 +2136,52 @@ _Calculadora de Impressão 3D Premium_`;
                     <span>Imprimir Recibo</span>
                   </button>
                 </div>
+
+                {/* ERP Production Integration buttons */}
+                <div className="pt-4 border-t border-white/5 space-y-2">
+                  <button
+                    onClick={() => {
+                      handleAddPedido({
+                        titulo: orcamentoTitulo,
+                        clienteId: clientes[0]?.id || "cli-1",
+                        clienteNome: clientes[0]?.nome || "Ana Carolina de Souza",
+                        status: "pagamento",
+                        tempoPrevistoMinutos: totalTempoMinutos,
+                        tempoRealMinutos: 0,
+                        falhasCount: 0,
+                        observacoes: "Pedido criado automaticamente a partir do Orçamento de Custos.",
+                        operador: "Daniel S.",
+                        impressoraId: selectedImpressoraId,
+                        totalPago: precoVendaSugerido,
+                        lucroLiquido: lucroLiquido,
+                        pesoG: totalPesoG
+                      });
+                      setActiveTab("pedidos");
+                    }}
+                    className="w-full py-3 bg-cyan-600 hover:bg-cyan-500 text-white font-black uppercase tracking-wider text-xs rounded-xl shadow-lg cursor-pointer transition-all flex items-center justify-center gap-2"
+                  >
+                    <Activity size={15} />
+                    <span>Transformar em Pedido (Mandar p/ Produção)</span>
+                  </button>
+
+                  <button
+                    onClick={handleCreateProductFromQuote}
+                    className="w-full py-2.5 bg-slate-950 hover:bg-slate-900 text-slate-200 font-extrabold uppercase tracking-wider text-[11px] rounded-xl border border-slate-800 shadow-sm cursor-pointer transition-all flex items-center justify-center gap-2"
+                  >
+                    <Package size={14} />
+                    <span>Cadastrar como Produto de Catálogo</span>
+                  </button>
+                </div>
+
               </div>
+
+              {/* Painel de Rentabilidade e Gestão de Farm (R$/h) */}
+              <FarmProfitabilityPanel
+                lucroLiquido={lucroLiquido}
+                totalTempoMinutos={totalTempoMinutos}
+                totalPesoG={totalPesoG}
+                custoProducaoTotal={custoProducaoTotal}
+              />
 
               {/* Dynamic SVG cost breakdown chart */}
               <CostBreakdownChart
@@ -1631,61 +2197,20 @@ _Calculadora de Impressão 3D Premium_`;
             </div>
 
           </div>
-        ) : activeTab === "orcamentos" ? (
-          <div className="max-w-4xl mx-auto space-y-6">
-            <div className="text-center space-y-2 mb-4">
-              <h2 className="text-xl font-bold tracking-tight text-slate-800 dark:text-white">
-                Seus Orçamentos Guardados
-              </h2>
-              <p className="text-xs text-slate-400 dark:text-slate-500 max-w-sm mx-auto">
-                Carregue rapidamente os dados salvos de volta para a calculadora ou copie as especificações formatadas para enviar ao cliente.
-              </p>
-            </div>
-            
-            <SavedQuotes
-              orcamentos={orcamentos}
-              onSelectOrcamento={handleLoadOrcamento}
-              onDeleteOrcamento={handleDeleteOrcamento}
-              onCopyTextSummary={handleCopyTextSummary}
-            />
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
-            {/* Filament materials catalog tab */}
-            <FilamentCatalog
-              filamentos={filamentos}
-              onAddFilamento={handleAddFilamento}
-              onDeleteFilamento={handleDeleteFilamento}
-              onUpdateFilamento={handleUpdateFilamento}
-              selectedFilamentoId={selectedFilamentoId}
-              onSelectFilamento={(id) => setSelectedFilamentoId(id)}
-            />
+        ) : null}
 
-            {/* Printer systems catalog tab */}
-            <PrinterCatalog
-              impressoras={impressoras}
-              onAddImpressora={handleAddImpressora}
-              onDeleteImpressora={handleDeleteImpressora}
-              onUpdateImpressora={handleUpdateImpressora}
-              selectedImpressoraId={selectedImpressoraId}
-              onSelectImpressora={(id) => setSelectedImpressoraId(id)}
-            />
-          </div>
-        )}
-
-      </main>
+      </div>
 
       {/* Footer credits block */}
-      <footer className="mt-16 border-t border-slate-200/50 dark:border-slate-900 bg-white dark:bg-slate-950 py-8 transition-colors">
-        <div className="max-w-7xl mx-auto px-4 text-center space-y-2">
-          <p className="text-xs text-slate-400 dark:text-slate-500">
-            Calculadora de Impressão 3D Premium • Projetado para fatiamento de PLA, ABS, PETG, TPU e Resina.
-          </p>
-          <p className="text-[10px] text-slate-300 dark:text-slate-650">
-            Armazenamento 100% local e privado em seu próprio navegador.
-          </p>
-        </div>
+      <footer className="mt-auto border-t border-slate-900 bg-slate-950 py-6 text-center space-y-1.5 shrink-0">
+        <p className="text-[11px] text-slate-500">
+          ProMaker Cloud SaaS ERP Portal • Painel Executivo para Farm de Impressoras 3D
+        </p>
+        <p className="text-[9px] text-slate-650">
+          Armazenamento 100% integrado e persistido localmente.
+        </p>
       </footer>
     </div>
+  </div>
   );
 }

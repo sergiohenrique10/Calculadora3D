@@ -229,7 +229,7 @@ export function GCodeParser({ onDataParsed }: GcodeParserProps) {
   };
 
   return (
-    <div className="bg-slate-50 dark:bg-slate-900/40 p-4.5 rounded-2xl border border-dashed border-slate-300 dark:border-slate-800 transition-all">
+    <div className="bg-slate-50 dark:bg-slate-900/40 p-4.5 rounded-2xl border border-dashed border-slate-300 dark:border-slate-800 transition-all form-card-contrast">
       <div className="flex items-center justify-between mb-3">
         <h4 className="text-xs font-bold text-slate-800 dark:text-white flex items-center gap-1.5 uppercase tracking-wider">
           <FileDigit size={14} className="text-brand-orange" />
@@ -283,7 +283,7 @@ export function GCodeParser({ onDataParsed }: GcodeParserProps) {
       )}
 
       {parsedInfo && (
-        <div className="bg-white dark:bg-slate-900/60 p-3 rounded-xl border border-slate-100 dark:border-slate-800 space-y-3.5">
+        <div className="bg-white dark:bg-slate-900/60 p-3 rounded-xl border border-slate-200 dark:border-slate-800 space-y-3.5">
           <div className="flex items-start justify-between">
             <div className="min-w-0 flex-1 pr-2">
               <h5 className="text-[10px] font-bold text-slate-500 uppercase tracking-tight">Arquivo Analisado</h5>
@@ -302,13 +302,13 @@ export function GCodeParser({ onDataParsed }: GcodeParserProps) {
 
           {parsedInfo.success ? (
             <div className="grid grid-cols-2 gap-2.5">
-              <div className="bg-slate-50 dark:bg-slate-950 p-2.5 rounded-lg border border-slate-100 dark:border-slate-850">
+              <div className="bg-slate-50 dark:bg-slate-950 p-2.5 rounded-lg border border-slate-200 dark:border-slate-850">
                 <span className="text-[9px] text-slate-400 font-medium block">Filamento Detectado</span>
                 <span className="text-xs font-extrabold text-slate-800 dark:text-white font-mono">
                   {parsedInfo.pesoGramas !== undefined ? `${parsedInfo.pesoGramas}g` : "Não detectado"}
                 </span>
               </div>
-              <div className="bg-slate-50 dark:bg-slate-950 p-2.5 rounded-lg border border-slate-100 dark:border-slate-850">
+              <div className="bg-slate-50 dark:bg-slate-950 p-2.5 rounded-lg border border-slate-200 dark:border-slate-850">
                 <span className="text-[9px] text-slate-400 font-medium block">Tempo Estimado</span>
                 <span className="text-xs font-extrabold text-slate-800 dark:text-white font-mono">
                   {parsedInfo.tempoMinutos !== undefined 

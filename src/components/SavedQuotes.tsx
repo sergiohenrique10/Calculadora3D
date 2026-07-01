@@ -17,7 +17,7 @@ export function SavedQuotes({
 }: SavedQuotesProps) {
   if (orcamentos.length === 0) {
     return (
-      <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl p-6 text-center space-y-2">
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 text-center space-y-2">
         <Sparkles className="mx-auto text-amber-500 animate-bounce" size={24} />
         <h4 className="text-xs font-bold text-slate-800 dark:text-slate-200">Nenhum orçamento salvo</h4>
         <p className="text-[11px] text-slate-400 dark:text-slate-500 max-w-xs mx-auto">
@@ -28,7 +28,7 @@ export function SavedQuotes({
   }
 
   return (
-    <div className="bg-white dark:bg-slate-900 duration-200 rounded-2xl border border-slate-100 dark:border-slate-800 p-5 shadow-sm space-y-4">
+    <div className="bg-white dark:bg-slate-900 duration-200 rounded-2xl border border-slate-200 dark:border-slate-800 p-5 shadow-sm space-y-4 form-card-contrast">
       <div>
         <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
           <span className="flex w-2.5 h-2.5 rounded-full bg-violet-500"></span>
@@ -53,7 +53,7 @@ export function SavedQuotes({
             <div
               key={orc.id}
               onClick={() => onSelectOrcamento(orc)}
-              className="group p-3.5 rounded-xl border border-slate-100 dark:border-slate-800/80 bg-slate-50/50 dark:bg-slate-900/50 hover:bg-slate-100/50 dark:hover:bg-slate-805/40 hover:border-slate-200 dark:hover:border-slate-700 cursor-pointer transition-all duration-200 shadow-sm-flat"
+              className="group p-3.5 rounded-xl border border-slate-200/80 dark:border-slate-800/80 bg-slate-50 dark:bg-slate-900/50 hover:bg-slate-100/60 dark:hover:bg-slate-850 hover:border-slate-300 dark:hover:border-slate-700 cursor-pointer transition-all duration-200 shadow-xs"
             >
               <div className="flex justify-between items-start mb-2">
                 <div>
@@ -99,7 +99,7 @@ export function SavedQuotes({
               </div>
 
               {/* Secondary operations row */}
-              <div className="flex justify-between items-center pt-2 border-t border-slate-100 dark:border-slate-800">
+              <div className="flex justify-between items-center pt-2 border-t border-slate-200 dark:border-slate-800">
                 <span className="text-[9px] text-slate-400 dark:text-slate-500 italic">
                   Clique para carregar no fatiador/calculadora
                 </span>

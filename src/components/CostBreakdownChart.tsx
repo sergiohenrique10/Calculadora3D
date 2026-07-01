@@ -46,7 +46,7 @@ export function CostBreakdownChart({
   let runningOffset = 0;
 
   return (
-    <div id="chart-section" className="bg-slate-50 dark:bg-slate-900/60 p-4 sm:p-6 rounded-2xl border border-slate-100 dark:border-slate-800">
+    <div id="chart-section" className="bg-white dark:bg-slate-900/60 p-4 sm:p-6 rounded-2xl border border-slate-200 dark:border-slate-800 form-card-contrast">
       <h3 className="font-semibold text-slate-900 dark:text-white mb-4 text-sm tracking-wide uppercase">
         Distribuição de Custos de Produção
       </h3>
